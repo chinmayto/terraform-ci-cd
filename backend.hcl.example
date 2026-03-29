@@ -1,7 +1,0 @@
-# Copy to backend.hcl and fill in your values
-# This file is passed to `terraform init -backend-config=backend.hcl`
-
-bucket         = "your-terraform-state-bucket"
-region         = "us-east-1"
-dynamodb_table = "terraform-state-lock"
-encrypt        = true

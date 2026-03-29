@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        terraform 'terraform-1.3.0'  // must match the name set in Manage Jenkins → Tools
-    }
-
     parameters {
         choice(
             name: 'ENVIRONMENT',
@@ -43,11 +39,7 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
-                    sh """
-                        terraform init \
-                          -backend-config="key=${params.ENVIRONMENT}/terraform.tfstate" \
-                          -reconfigure
-                    """
+                    sh 'terraform init -input=false -reconfigure'
                 }
             }
         }
@@ -63,6 +55,7 @@ pipeline {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
                     sh """
                         terraform plan \
+                          -input=false \
                           -var-file="${TF_VAR_FILE}" \
                           -out=tfplan-${params.ENVIRONMENT}
                     """
@@ -129,6 +122,7 @@ pipeline {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
                     sh """
                         terraform destroy \
+                          -input=false \
                           -var-file="${TF_VAR_FILE}" \
                           -auto-approve
                     """
