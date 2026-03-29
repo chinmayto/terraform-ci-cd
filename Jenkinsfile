@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        terraform 'terraform-1.3.0'  // must match the name set in Manage Jenkins → Tools
+    }
+
     parameters {
         choice(
             name: 'ENVIRONMENT',
@@ -17,8 +21,9 @@ pipeline {
     environment {
         TF_VAR_FILE        = "environments/${params.ENVIRONMENT}.tfvars"
         ARTIFACT_NAME      = "terraform-${params.ENVIRONMENT}-${BUILD_NUMBER}.zip"
-        AWS_CREDENTIALS_ID = 'aws-credentials'
+        AWS_CREDENTIALS_ID = 'aws-credentials'   // update this to match your Jenkins credential ID
         NEXUS_CREDENTIALS  = credentials('nexus-credentials')
+        PATH               = "/usr/local/bin:${env.PATH}"  // adjust to wherever terraform binary lives
     }
 
     options {
@@ -134,7 +139,13 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            script {
+                try {
+                    cleanWs()
+                } catch (Exception e) {
+                    echo "Workspace cleanup skipped: ${e.message}"
+                }
+            }
         }
         success {
             echo "Pipeline completed successfully for ${params.ENVIRONMENT}"
