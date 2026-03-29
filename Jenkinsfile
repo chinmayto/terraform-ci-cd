@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        terraform 'terraform'  // must match the name set in Manage Jenkins → Tools
+    }
+
     parameters {
         choice(
             name: 'ENVIRONMENT',
@@ -17,9 +21,8 @@ pipeline {
     environment {
         TF_VAR_FILE        = "environments/${params.ENVIRONMENT}.tfvars"
         ARTIFACT_NAME      = "terraform-${params.ENVIRONMENT}-${BUILD_NUMBER}.zip"
-        AWS_CREDENTIALS_ID = 'aws-credentials'   // update this to match your Jenkins credential ID
+        AWS_CREDENTIALS_ID = 'aws-credentials'
         NEXUS_CREDENTIALS  = credentials('nexus-credentials')
-        PATH               = "/usr/local/bin:${env.PATH}"  // adjust to wherever terraform binary lives
     }
 
     options {
@@ -39,14 +42,14 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
-                    sh 'terraform init -input=false -reconfigure'
+                    sh "terraform init -input=false -reconfigure"
                 }
             }
         }
 
         stage('Terraform Validate') {
             steps {
-                sh 'terraform validate'
+                sh "terraform validate"
             }
         }
 
@@ -81,7 +84,6 @@ pipeline {
         stage('Upload to Nexus') {
             steps {
                 script {
-                    // Read nexus_url and nexus_repo from the tfvars file
                     def tfvarsContent = readFile("environments/${params.ENVIRONMENT}.tfvars")
                     def nexusUrl  = (tfvarsContent =~ /nexus_url\s*=\s*"([^"]+)"/)[0][1]
                     def nexusRepo = (tfvarsContent =~ /nexus_repo\s*=\s*"([^"]+)"/)[0][1]
@@ -99,13 +101,9 @@ pipeline {
             when {
                 expression { params.TF_ACTION == 'apply' }
             }
-            input {
-                message "Apply changes to ${params.ENVIRONMENT}?"
-                ok "Yes, apply"
-            }
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
-                    sh "terraform apply -auto-approve tfplan-${params.ENVIRONMENT}"
+                    sh "terraform apply -input=false -auto-approve tfplan-${params.ENVIRONMENT}"
                 }
             }
         }
@@ -113,10 +111,6 @@ pipeline {
         stage('Terraform Destroy') {
             when {
                 expression { params.TF_ACTION == 'destroy' }
-            }
-            input {
-                message "DESTROY ${params.ENVIRONMENT} environment?"
-                ok "Yes, destroy"
             }
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
