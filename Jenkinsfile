@@ -17,9 +17,9 @@ pipeline {
     environment {
         TF_VAR_FILE        = "environments/${params.ENVIRONMENT}.tfvars"
         ARTIFACT_NAME      = "terraform-${params.ENVIRONMENT}-${BUILD_NUMBER}.zip"
-        AWS_CREDENTIALS_ID = 'aws-credentials'
+        AWS_CREDENTIALS_ID = 'aws-credentials'   // update this to match your Jenkins credential ID
         NEXUS_CREDENTIALS  = credentials('nexus-credentials')
-        TF_BIN             = "/usr/local/bin/terraform"  // update to match: which terraform
+        PATH               = "/usr/local/bin:${env.PATH}"  // adjust to wherever terraform binary lives
     }
 
     options {
@@ -39,14 +39,14 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
-                    sh "${TF_BIN} init -input=false -reconfigure"
+                    sh 'terraform init -input=false -reconfigure'
                 }
             }
         }
 
         stage('Terraform Validate') {
             steps {
-                sh "${TF_BIN} validate"
+                sh 'terraform validate'
             }
         }
 
@@ -54,7 +54,7 @@ pipeline {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
                     sh """
-                        ${TF_BIN} plan \
+                        terraform plan \
                           -input=false \
                           -var-file="${TF_VAR_FILE}" \
                           -out=tfplan-${params.ENVIRONMENT}
@@ -81,6 +81,7 @@ pipeline {
         stage('Upload to Nexus') {
             steps {
                 script {
+                    // Read nexus_url and nexus_repo from the tfvars file
                     def tfvarsContent = readFile("environments/${params.ENVIRONMENT}.tfvars")
                     def nexusUrl  = (tfvarsContent =~ /nexus_url\s*=\s*"([^"]+)"/)[0][1]
                     def nexusRepo = (tfvarsContent =~ /nexus_repo\s*=\s*"([^"]+)"/)[0][1]
@@ -104,7 +105,7 @@ pipeline {
             }
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
-                    sh "${TF_BIN} apply -input=false -auto-approve tfplan-${params.ENVIRONMENT}"
+                    sh "terraform apply -auto-approve tfplan-${params.ENVIRONMENT}"
                 }
             }
         }
@@ -120,7 +121,7 @@ pipeline {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
                     sh """
-                        ${TF_BIN} destroy \
+                        terraform destroy \
                           -input=false \
                           -var-file="${TF_VAR_FILE}" \
                           -auto-approve
