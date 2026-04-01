@@ -70,12 +70,7 @@ pipeline {
             steps {
                 sh """
                     zip -r ${ARTIFACT_NAME} \
-                        main.tf \
-                        variables.tf \
-                        outputs.tf \
-                        modules/ \
-                        environments/${params.ENVIRONMENT}.tfvars \
-                        tfplan-${params.ENVIRONMENT}
+                        tfplan-${params.ENVIRONMENT} 
                 """
                 archiveArtifacts artifacts: "${ARTIFACT_NAME}", fingerprint: true
             }
