@@ -97,32 +97,6 @@ pipeline {
             }
         }
 
-        stage('Terraform Apply') {
-            when {
-                expression { params.TF_ACTION == 'apply' }
-            }
-            steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
-                    sh "terraform apply -input=false -auto-approve tfplan-${params.ENVIRONMENT}"
-                }
-            }
-        }
-
-        stage('Terraform Destroy') {
-            when {
-                expression { params.TF_ACTION == 'destroy' }
-            }
-            steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
-                    sh """
-                        terraform destroy \
-                          -input=false \
-                          -var-file="${TF_VAR_FILE}" \
-                          -auto-approve
-                    """
-                }
-            }
-        }
     }
 
     post {
