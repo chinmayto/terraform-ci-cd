@@ -13,7 +13,7 @@ pipeline {
         )
         choice(
             name: 'TF_ACTION',
-            choices: ['plan', 'apply', 'destroy'],
+            choices: ['plan'],
             description: 'Terraform action to perform'
         )
     }
