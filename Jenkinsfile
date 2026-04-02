@@ -69,7 +69,8 @@ pipeline {
                         tfplan-${params.ENVIRONMENT} \
                         .terraform.lock.hcl \
                         .terraform/ \
-                        *.tf
+                        *.tf \
+                        modules/
                 """
                 archiveArtifacts artifacts: "${ARTIFACT_NAME}", fingerprint: true
             }
