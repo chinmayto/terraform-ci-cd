@@ -38,7 +38,7 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
-                    sh "terraform init -input=false -reconfigure"
+                    sh "terraform init -input=false -reconfigure -backend-config='key=${params.ENVIRONMENT}/terraform.tfstate'"
                 }
             }
         }
