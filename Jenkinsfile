@@ -70,7 +70,8 @@ pipeline {
                         .terraform.lock.hcl \
                         .terraform/ \
                         *.tf \
-                        modules/
+                        modules/ \
+                        environments/${params.ENVIRONMENT}.tfvars
                 """
                 archiveArtifacts artifacts: "${ARTIFACT_NAME}", fingerprint: true
             }
