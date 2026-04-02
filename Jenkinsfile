@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        terraform 'terraform'  // must match the name set in Manage Jenkins → Tools
-    }
-
     parameters {
         choice(
             name: 'ENVIRONMENT',
