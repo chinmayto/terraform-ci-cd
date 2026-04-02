@@ -8,7 +8,14 @@ terraform {
     }
   }
 
-  backend "s3" {}
+  backend "s3" {
+    bucket                     = "chinmayto-terraform-state-bucket-1755526674"
+    key                        = "terraform-ci-cd/terraform.tfstate"
+    region                     = "us-east-1"
+    encrypt                    = true
+    use_lockfile               = true
+    skip_requesting_account_id = false
+  }
 }
 
 provider "aws" {
